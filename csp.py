@@ -31,11 +31,14 @@ def read_input(input_file_path: str) -> tuple:
   #Other lines shows edges
   edges = []
   for e in cleaned[1:]:
+    # Handling isolated nodes
     if(e[-1]==','):
       e = e[:-1]
+    #adding edge to edgelist
     edges.append(tuple(map(int, e.split(','))))
 
   return n_colors, edges
+
 
 # Generates color list from given number of colors
 def generate_colors(n: int) -> list:
@@ -74,17 +77,14 @@ def generate_domains(graph: dict, colors: list):
     domain_dict[X_i] = [color for color in colors]
   return domain_dict
 
+# Copying functions for ensuring to create a copy of dictionary. 
+# Otherwise, changing content of dictionary in one place affects all others
 def copy_domains(domains: dict) -> dict:
   d_copy = {}
   for key in domains:
     d_copy[key] = [color for color in domains[key]]
 
   return d_copy
-
-def shuffle_domains(domains:dict)->dict:
-  for key in domains:
-     random.shuffle(domains[key])
-  return domains
 
 def copy_assignments(assignments: dict) -> dict:
   a_copy = {}
@@ -93,19 +93,17 @@ def copy_assignments(assignments: dict) -> dict:
 
   return a_copy
 
+# Function for shuffling color domains of variables 
+def shuffle_domains(domains:dict)->dict:
+  for key in domains:
+     random.shuffle(domains[key])
+  return domains
 
 
 class GraphColoring:
 
-  """ BELOW METHODS ARE CLASS INSTANCE HELPER METHODS
-    """
-
   # Constructor
   def __init__(self, edge_list, colors, graph, init_domains):
-    # n_col, g_edges = read_input(input_file_path)
-    # c_list = generate_colors(n_col)
-    # g = generate_graph(g_edges)
-    # d = generate_domains(g, c_list)
 
     self.edge_list = edge_list
     self.colors = colors
@@ -159,11 +157,14 @@ class GraphColoring:
         return 0
     return 1
 
-  """ BELOW METHODS IS BUILT FOR IMPLEMENTING BACKTRACKING AND ITS PARTS : MCV,LCV,AC_3
-    """
+  """ 
+    BELOW METHODS IS BUILT FOR IMPLEMENTING BACKTRACKING AND ITS PARTS : MCV,LCV,AC_3
+  """
 
-  # Select most constrained variable
-  # In case of tie take the one that has most neighbours
+  """ 
+      Select Most Constrained Variable : variable which has minimum length of domain
+      In case of tie take the one that has most number of neighbours
+  """
   def MCV(self, assignments: dict, domains: dict):
     # select all unassigned variables
     left_variables = list(
@@ -179,7 +180,7 @@ class GraphColoring:
 
     left_variables = list(sorted_lv.keys())
 
-    #find minimum constrained variable
+    #find most constrained variable
     min_var = left_variables[0]
     min_c = len(domains[min_var])
 
@@ -189,6 +190,10 @@ class GraphColoring:
         min_var = X_i
     return min_var
 
+  """ Select Least Constrained Value :
+    Order values of selected variable by decreasing number of consistent values of neighboring variables.
+  """  
+  
   def LCV(self, assignments: dict, domains: dict, X_i: int):
     colors_domain = []
     color_index = 0
@@ -196,19 +201,22 @@ class GraphColoring:
       cv = 0  #consistent values
       for X_j in self.neighbours(X_i):
         cv = cv + len(domains[X_j])
+        # if color is in the domain of the neighbour, we decrease consistent values
         if (col in domains[X_j]):
           cv = cv - 1
       colors_domain.append((cv, color_index, col))
       color_index = color_index+1
-
+    
+    # Order domain by decreasing number of consistent values
     colors_domain.sort(reverse=True)
 
     ordered_domain_values = list(map(lambda x: x[2], colors_domain))
 
     return ordered_domain_values
 
-  #Remove values from domain of X_i to make X_i arc consistent with respect to X_j.
-  # In our specific graph coloring problem, enforce only happens if there is only one value in the domain of X_j
+  """ Remove values from domain of X_i to make X_i arc consistent with respect to X_j.
+      In our specific graph coloring problem, enforce only happens if there is only one value in the domain of X_j
+  """ 
   def enforce_arc_consistency(self, domains: dict, X_i: int, X_j: int):
     d_copy = copy_domains(domains)
 
@@ -219,13 +227,15 @@ class GraphColoring:
       self.reduce_domain(d_copy, val, X_i)
     return d_copy
 
-  # we will call AC_3 after coloring X_i
+  """
+      AC-3: repeatedly enforce arc consistency on all variables
+      We will call AC_3 after coloring X_i
+  """
+  
   def AC_3(self, domains: dict, X_j: int):
 
     domains_old = copy_domains(domains)
     domains_new = copy_domains(domains)
-
-    #print("domains_old: {}\ndomains_new: {}".format(domains_old,domains_new))
 
     S = [X_j]
 
@@ -236,32 +246,33 @@ class GraphColoring:
         domains_new = self.enforce_arc_consistency(domains_old, X_i, X_j)
         if (domains_new == None):
           return None
-        #print("Domains Old: {}\nDomains_New: {}".format(domains_old,domains_new))
         if (len(domains_old[X_i]) != len(domains_new[X_i])
             and len(domains_new[X_i]) == 1):
           S.append(X_i)
         domains_old = domains_new.copy()
     return domains_new
 
+  """ BackTrack Algorithm implementation
+  """  
   def BackTracking(self, assignments, domains,verbose=1):
-    #print("Assignments: ",assignments)
-    #print("Domains: ",domains)
-
+    # Check if assignment is complete, if complete then return assignment
     if self.check_complete(assignments) == 1:
       return assignments
 
     assignments_new = copy_assignments(assignments)
-
+    
+    # Select Most Constrained Variable
     X_i = self.MCV(assignments_new, domains)
-
+    
+    # Order values according to LCV
     ordered_vals = self.LCV(assignments_new, domains, X_i)
 
     for v in ordered_vals:
 
       assignments_new[X_i] = v
 
+      # if partial weight is zero, continue
       pw = self._partial_weight(assignments_new, X_i)
-
       if (pw == 0):
         if verbose > 1:
           print("Constraints do not meet for variable {} and value {}".format(X_i,v))
@@ -276,18 +287,18 @@ class GraphColoring:
       #If any domains_i is empty, continue
       if domains_new is None or any(
           len(domains_new[d_i]) == 0 for d_i in domains_new):
-        #                 print("AC_3 do not meet for variable {} and value {}".format(X_i,v))
         assignments_new = copy_assignments(assignments)
         domains_new = copy_domains(domains)
         continue
 
       result = self.BackTracking(assignments_new, domains_new,verbose)
-      #print("after recursive call, result:", result)
       if result != {}:
         return result
 
     return {}
 
+  """ Calling BackTrack Algorithm
+  """
   def BackTracking_Search(self, verbose=1):
     if(verbose>0):
       print("Backtracking algorithm started...")
@@ -302,13 +313,13 @@ class GraphColoring:
 
     if verbose>0:
       end_time = timer()
-      print("Algorithm Ended in {} seconds".format(round(end_time-start_time,4)))
-      
-    
+      print("Algorithm Ended in {} seconds".format(round(end_time-start_time,4)))  
     return res
 
+  
   """METHODS FOR DISPLAYING THE RESULTS"""
 
+  #Prints the solution if exists
   def print_solution(self):
     if self.solution == {}:
       print("No Solution")
@@ -316,8 +327,10 @@ class GraphColoring:
     for node in self.solution:
       print("Node {} colored with {}".format(node, self.solution[node]))
 
+  # Draws solution with help of networkx graph
   def draw_solution(self):
 
+    #Generating networkx graph
     not_isolates = list(filter(lambda edge: len(edge)==2, self.edge_list))
     isolates = list(filter(lambda edge: len(edge)==1, self.edge_list))
     G = nx.from_edgelist(not_isolates)
@@ -325,7 +338,7 @@ class GraphColoring:
       G.add_node(i[0])
 
     
-
+    # State options for drawing, color nodes
     if self.solution == {}:
       colors = "blue"
       colormap = None
