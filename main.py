@@ -10,11 +10,12 @@ if len(sys.argv)==2:
   d = generate_domains(g, c_list)
   print("Graph is generated")
   ex = GraphColoring(edge_list = g_edges, colors = c_list, graph=g, init_domains = d )
-  solution = ex.BackTracking_Search()
+  solution = ex.BackTracking_Search(verbose=1)
   if (solution == {}):
     print("No Solution")
   else:
+    print("Solution:")
     ex.print_solution()
-  #ex.draw_solution()
+  ex.draw_solution()
 else:
   print("Usage: python3 main.py <input_filepath>")

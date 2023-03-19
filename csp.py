@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
+from timeit import default_timer as timer
 
 """ GENERATION FUNCTIONS
       - Used to read file and create instance of GraphColoring class
@@ -242,7 +243,7 @@ class GraphColoring:
         domains_old = domains_new.copy()
     return domains_new
 
-  def BackTracking(self, assignments, domains):
+  def BackTracking(self, assignments, domains,verbose=1):
     #print("Assignments: ",assignments)
     #print("Domains: ",domains)
 
@@ -262,7 +263,8 @@ class GraphColoring:
       pw = self._partial_weight(assignments_new, X_i)
 
       if (pw == 0):
-        #                 print("Constraints do not meet for variable {} and value {}".format(X_i,v))
+        if verbose > 1:
+          print("Constraints do not meet for variable {} and value {}".format(X_i,v))
         assignments_new = copy_assignments(assignments)
         continue
 
@@ -279,19 +281,30 @@ class GraphColoring:
         domains_new = copy_domains(domains)
         continue
 
-      result = self.BackTracking(assignments_new, domains_new)
+      result = self.BackTracking(assignments_new, domains_new,verbose)
       #print("after recursive call, result:", result)
       if result != {}:
         return result
 
     return {}
 
-  def BackTracking_Search(self):
+  def BackTracking_Search(self, verbose=1):
+    if(verbose>0):
+      print("Backtracking algorithm started...")
+      #For measuring algorithm time
+      start_time = timer()
+    
     assignments = {}
     domains = copy_domains(self.init_domains)
     domains_shuffles = shuffle_domains(domains)
     res = self.BackTracking(assignments, domains_shuffles)
     self.solution = res
+
+    if verbose>0:
+      end_time = timer()
+      print("Algorithm Ended in {} seconds".format(round(end_time-start_time,4)))
+      
+    
     return res
 
   """METHODS FOR DISPLAYING THE RESULTS"""
