@@ -17,6 +17,6 @@ if len(sys.argv)==2:
   else:
     print("Solution:")
     ex.print_solution()
-  ex.draw_solution()
+    ex.draw_solution()
 else:
   print("Usage: python3 main.py <input_filepath>")
