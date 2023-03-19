@@ -9,6 +9,7 @@ if len(sys.argv)==2:
   g = generate_graph(g_edges)
   d = generate_domains(g, c_list)
   print("Graph is generated")
+  
   # Running backtrack algorithm
   ex = GraphColoring(edge_list = g_edges, colors = c_list, graph=g, init_domains = d )
   solution = ex.BackTracking_Search(verbose=1)

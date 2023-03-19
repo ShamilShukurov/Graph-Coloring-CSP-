@@ -214,18 +214,17 @@ class GraphColoring:
 
     return ordered_domain_values
 
+  
   """ Remove values from domain of X_i to make X_i arc consistent with respect to X_j.
       In our specific graph coloring problem, enforce only happens if there is only one value in the domain of X_j
   """ 
   def enforce_arc_consistency(self, domains: dict, X_i: int, X_j: int):
     d_copy = copy_domains(domains)
-    # print("Domains inside enforce: {}".format(d_copy))
 
     if (len(d_copy[X_j]) == 0):
       return None
     if (len(d_copy[X_j]) == 1):
       val = d_copy[X_j][0]
-      # print("AM I WORKING?")
       d_copy = self.reduce_domain(d_copy, val, X_i)
     return d_copy
 
@@ -245,9 +244,7 @@ class GraphColoring:
       X_j = S.pop(0)
 
       for X_i in self.neighbours(X_j):
-        # print("Neighbour :{}".format(X_i))
         domains_new = self.enforce_arc_consistency(domains_old, X_i, X_j)
-        # print("Domains new: {}".format(domains_new))
         if (domains_new == None):
           return None
         if (len(domains_old[X_i]) != len(domains_new[X_i])
@@ -350,7 +347,7 @@ class GraphColoring:
       
     else:
       colors = [self.solution[n] for n in G.nodes()]
-      colormap = plt.cm.Set1
+      colormap = plt.cm.tab10
       title = "Solution exists:"
       
 
