@@ -2,111 +2,115 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 
+""" GENERATION FUNCTIONS
+      - Used to read file and create instance of GraphColoring class
+"""
+
+
+"""
+Function : read_input
+Input: filepath of input file
+Return: tuple - first element in tuple is number of colors, 
+        second element is list of edges that makes graph
+"""
+
+def read_input(input_file_path: str) -> tuple:
+  # Read file
+  with open(input_file_path, encoding="utf8") as f:
+    lines = f.readlines()
+  # Filter out comment lines and empty lines
+  filtered = list(filter(lambda l: l != '\n' and l[0] != '#', lines))
+
+  # Remove newline characters from lines
+  cleaned = list(map(lambda l: l.rstrip(), filtered))
+
+  #First line shows number of colors
+  n_colors = int(cleaned[0][-1])
+
+  #Other lines shows edges
+  edges = []
+  for e in cleaned[1:]:
+    if(e[-1]==','):
+      e = e[:-1]
+    edges.append(tuple(map(int, e.split(','))))
+
+  return n_colors, edges
+
+# Generates color list from given number of colors
+def generate_colors(n: int) -> list:
+  return list(range(1, n + 1))
+
+# Generates dict for graph
+def generate_graph(edges: list) -> dict:
+  g = {}
+
+  # utility function for adding j as a neighbour of i
+  def add_neighbour(i: int, j: int):
+    if (j is None) and (i not in g):
+      g[i] = []
+      return
+    
+    if (i in g):
+      if (j not in g[i]):
+        g[i].append(j)
+    else:
+      g[i] = [j]
+
+  for e in edges:
+    if(len(e)==2):
+      add_neighbour(e[0], e[1])
+      add_neighbour(e[1], e[0])
+    if(len(e)==1):
+      add_neighbour(e[0],None)
+    
+  return g
+
+# Generate dict of domains of variables
+def generate_domains(graph: dict, colors: list):
+  variables = list(graph.keys())
+  domain_dict = {}
+  for X_i in variables:
+    domain_dict[X_i] = [color for color in colors]
+  return domain_dict
+
+def copy_domains(domains: dict) -> dict:
+  d_copy = {}
+  for key in domains:
+    d_copy[key] = [color for color in domains[key]]
+
+  return d_copy
+
+def shuffle_domains(domains:dict)->dict:
+  for key in domains:
+     random.shuffle(domains[key])
+  return domains
+
+def copy_assignments(assignments: dict) -> dict:
+  a_copy = {}
+  for key in assignments:
+    a_copy[key] = assignments[key]
+
+  return a_copy
+
 
 
 class GraphColoring:
-  """ GENERATION FUNCTIONS
-        - Used to read file and initialize instance of GraphColoring class
-    """
-  """
-    Input: filepath of input file
-    Return: tuple - first element in tuple is number of colors, 
-            second element is list of edges that makes graph
-    """
-
-  def read_input(input_file_path: str) -> tuple:
-    # Read file
-    with open(input_file_path, encoding="utf8") as f:
-      lines = f.readlines()
-    # Filter out comment lines and empty lines
-    filtered = list(filter(lambda l: l != '\n' and l[0] != '#', lines))
-
-    # Remove newline characters from lines
-    cleaned = list(map(lambda l: l.rstrip(), filtered))
-
-    #First line shows number of colors
-    n_colors = int(cleaned[0][-1])
-
-    #Other lines shows edges
-    edges = []
-    for e in cleaned[1:]:
-      if(e[-1]==','):
-        e = e[:-1]
-      edges.append(tuple(map(int, e.split(','))))
-
-    return n_colors, edges
-
-  # Generates color list from given number of colors
-  def generate_colors(n: int) -> list:
-    return list(range(1, n + 1))
-
-  # Generates dict for graph
-  def generate_graph(edges: list) -> dict:
-    g = {}
-
-    # utility function for adding j as a neighbour of i
-    def add_neighbour(i: int, j: int):
-      if (j is None) and (i not in g):
-        g[i] = []
-        return
-      
-      if (i in g):
-        if (j not in g[i]):
-          g[i].append(j)
-      else:
-        g[i] = [j]
-
-    for e in edges:
-      if(len(e)==2):
-        add_neighbour(e[0], e[1])
-        add_neighbour(e[1], e[0])
-      if(len(e)==1):
-        add_neighbour(e[0],None)
-      
-    return g
-
-  # Generate dict of domains of variables
-  def generate_domains(graph: dict, colors: list):
-    variables = list(graph.keys())
-    domain_dict = {}
-    for X_i in variables:
-      domain_dict[X_i] = [color for color in colors]
-    return domain_dict
-
-  def copy_domains(self, domains: dict) -> dict:
-    d_copy = {}
-    for key in domains:
-      d_copy[key] = [color for color in domains[key]]
-
-    return d_copy
-
-  def shuffle_domains(self, domains:dict)->dict:
-    for key in domains:
-       random.shuffle(domains[key])
-    return domains
-
-  def copy_assignments(self, assignments: dict) -> dict:
-    a_copy = {}
-    for key in assignments:
-      a_copy[key] = assignments[key]
-
-    return a_copy
 
   """ BELOW METHODS ARE CLASS INSTANCE HELPER METHODS
     """
 
   # Constructor
-  def __init__(self, input_file_path):
-    n_col, g_edges = GraphColoring.read_input(input_file_path)
-    c_list = GraphColoring.generate_colors(n_col)
-    g = GraphColoring.generate_graph(g_edges)
-    d = GraphColoring.generate_domains(g, c_list)
+  def __init__(self, edge_list, colors, graph, init_domains):
+    # n_col, g_edges = read_input(input_file_path)
+    # c_list = generate_colors(n_col)
+    # g = generate_graph(g_edges)
+    # d = generate_domains(g, c_list)
 
-    self.edge_list = g_edges
-    self.colors = c_list
-    self.graph = g
-    self.variables = list(g.keys())
-    self.init_domains = d
+    self.edge_list = edge_list
+    self.colors = colors
+    self.graph = graph
+    self.variables = list(graph.keys())
+    self.init_domains = init_domains
     self.solution = {}
 
   # For printing object info
@@ -121,7 +125,7 @@ class GraphColoring:
 
   # Remove specified value from the domain of specified variable
   def reduce_domain(self, domains: dict, val: int, X_i: int):
-    d = self.copy_domains(domains)
+    d = copy_domains(domains)
     if X_i in d:
       if val in d[X_i]:
         d[X_i].remove(val)
@@ -205,7 +209,7 @@ class GraphColoring:
   #Remove values from domain of X_i to make X_i arc consistent with respect to X_j.
   # In our specific graph coloring problem, enforce only happens if there is only one value in the domain of X_j
   def enforce_arc_consistency(self, domains: dict, X_i: int, X_j: int):
-    d_copy = self.copy_domains(domains)
+    d_copy = copy_domains(domains)
 
     if (len(d_copy[X_j]) == 0):
       return None
@@ -217,8 +221,8 @@ class GraphColoring:
   # we will call AC_3 after coloring X_i
   def AC_3(self, domains: dict, X_j: int):
 
-    domains_old = self.copy_domains(domains)
-    domains_new = self.copy_domains(domains)
+    domains_old = copy_domains(domains)
+    domains_new = copy_domains(domains)
 
     #print("domains_old: {}\ndomains_new: {}".format(domains_old,domains_new))
 
@@ -245,7 +249,7 @@ class GraphColoring:
     if self.check_complete(assignments) == 1:
       return assignments
 
-    assignments_new = self.copy_assignments(assignments)
+    assignments_new = copy_assignments(assignments)
 
     X_i = self.MCV(assignments_new, domains)
 
@@ -259,10 +263,10 @@ class GraphColoring:
 
       if (pw == 0):
         #                 print("Constraints do not meet for variable {} and value {}".format(X_i,v))
-        assignments_new = self.copy_assignments(assignments)
+        assignments_new = copy_assignments(assignments)
         continue
 
-      domains_new = self.copy_domains(domains)
+      domains_new = copy_domains(domains)
       domains_new[X_i] = [v]
 
       domains_new = self.AC_3(domains_new, X_i)
@@ -271,8 +275,8 @@ class GraphColoring:
       if domains_new is None or any(
           len(domains_new[d_i]) == 0 for d_i in domains_new):
         #                 print("AC_3 do not meet for variable {} and value {}".format(X_i,v))
-        assignments_new = self.copy_assignments(assignments)
-        domains_new = self.copy_domains(domains)
+        assignments_new = copy_assignments(assignments)
+        domains_new = copy_domains(domains)
         continue
 
       result = self.BackTracking(assignments_new, domains_new)
@@ -284,8 +288,8 @@ class GraphColoring:
 
   def BackTracking_Search(self):
     assignments = {}
-    domains = self.copy_domains(self.init_domains)
-    domains_shuffles = self.shuffle_domains(domains)
+    domains = copy_domains(self.init_domains)
+    domains_shuffles = shuffle_domains(domains)
     res = self.BackTracking(assignments, domains_shuffles)
     self.solution = res
     return res
