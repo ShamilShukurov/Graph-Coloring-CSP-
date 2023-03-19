@@ -219,12 +219,14 @@ class GraphColoring:
   """ 
   def enforce_arc_consistency(self, domains: dict, X_i: int, X_j: int):
     d_copy = copy_domains(domains)
+    # print("Domains inside enforce: {}".format(d_copy))
 
     if (len(d_copy[X_j]) == 0):
       return None
     if (len(d_copy[X_j]) == 1):
       val = d_copy[X_j][0]
-      self.reduce_domain(d_copy, val, X_i)
+      # print("AM I WORKING?")
+      d_copy = self.reduce_domain(d_copy, val, X_i)
     return d_copy
 
   """
@@ -243,7 +245,9 @@ class GraphColoring:
       X_j = S.pop(0)
 
       for X_i in self.neighbours(X_j):
+        # print("Neighbour :{}".format(X_i))
         domains_new = self.enforce_arc_consistency(domains_old, X_i, X_j)
+        # print("Domains new: {}".format(domains_new))
         if (domains_new == None):
           return None
         if (len(domains_old[X_i]) != len(domains_new[X_i])
@@ -368,7 +372,7 @@ class GraphColoring:
     # Draw edges
     nx.draw_networkx_edges(G, pos, **edge_options)
 
-    # Draw your labels
+    # Draw labels
     nx.draw_networkx_labels(G, pos, **node_label_options)
 
     plt.axis("off")
