@@ -12,7 +12,7 @@ if len(sys.argv)==2:
   
   # Running backtrack algorithm
   ex = GraphColoring(edge_list = g_edges, colors = c_list, graph=g, init_domains = d )
-  solution = ex.BackTracking_Search(verbose=1)
+  solution = ex.BackTracking_Search(verbose=1,shuffle=True)
   if (solution == {}):
     print("No Solution")
   else:

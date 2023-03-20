@@ -216,7 +216,7 @@ class GraphColoring:
 
   
   """ Remove values from domain of X_i to make X_i arc consistent with respect to X_j.
-      In our specific graph coloring problem, enforce only happens if there is only one value in the domain of X_j
+        In our specific graph coloring problem, enforce only happens if there is only one value in the domain of X_j
   """ 
   def enforce_arc_consistency(self, domains: dict, X_i: int, X_j: int):
     d_copy = copy_domains(domains)
@@ -300,7 +300,7 @@ class GraphColoring:
 
   """ Calling BackTrack Algorithm
   """
-  def BackTracking_Search(self, verbose=1):
+  def BackTracking_Search(self, verbose=1, shuffle=False):
     if(verbose>0):
       print("Backtracking algorithm started...")
       #For measuring algorithm time
@@ -308,8 +308,10 @@ class GraphColoring:
     
     assignments = {}
     domains = copy_domains(self.init_domains)
-    domains_shuffles = shuffle_domains(domains)
-    res = self.BackTracking(assignments, domains_shuffles)
+    if(shuffle):
+      domains= shuffle_domains(domains)
+    
+    res = self.BackTracking(assignments, domains)
     self.solution = res
 
     if verbose>0:
